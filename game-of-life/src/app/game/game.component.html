@@ -1,8 +1,32 @@
 <div class="container">
-  <div class="row">
-
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <select [(ngModel)]="selectedSizeIndex" (change)="changeBoardSize()">
+        <option *ngFor="let size of boardSizes; let i = index" [value]="i">{{ size.name }}</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <button (click)="toggleSimulation()" class="btn btn-primary">{{ isRunning ? 'Pause' : 'Démarrer' }}</button>
+      <button (click)="resetSimulation()" class="btn btn-danger">Réinitialiser</button>
+      <button (click)="cleanCanvas()" class="btn btn-danger">page blanche</button>
+    </div>
+    <div class="col-md-4">
+      <button (click)="togglePaintMode()" class="btn btn-secondary">{{ isPainting ? 'Désactiver' : 'Activer' }} le mode peinture</button>
+    </div>
   </div>
-  <button (click)="createGrid()" class="btn btn-primary">Create grid</button>
-  <div class="justify-content-center"></div>
-  <canvas #gameBoard class="mt-3"></canvas>
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <p>Génération : {{ generation }}</p>
+      <p>Cellules vivantes : {{ livingCells }}</p>
+    </div>
+    <div class="col-md-6">
+      <button (click)="saveCurrentSeed()" class="btn btn-info">Sauvegarder la configuration</button>
+      <button (click)="loadSavedSeed()" class="btn btn-info">Charger la configuration</button>
+    </div>
+  </div>
+  <canvas #gameBoard
+    (click)="onCellClick($event)"
+    (mousemove)="onCellHover($event)"
+    class="mt-3">
+  </canvas>
 </div>

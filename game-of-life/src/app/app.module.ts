@@ -18,7 +18,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     AppRoutingModule,
     FormsModule,
     AgGridAngular,
-    NgbModule
+    NgbModule,
+    FormsModule
   ],
   providers: [AgGridAngular],
   bootstrap: [AppComponent]
