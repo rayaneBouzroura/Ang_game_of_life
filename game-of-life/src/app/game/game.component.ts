@@ -19,12 +19,26 @@ export type BitArray = Bit[];
   styleUrls: ['./game.component.css'],
 })
 export class GameComponent implements OnInit, AfterViewInit {
-cleanCanvas() {
-  //suprime everything :/
-  this.context!.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
-  //also resets the board
-  this.createGrid();
-}
+  // Add this near the top of the class, with other properties
+  public animationSpeeds = [
+    { name: 'Slow', value: 500 },
+    { name: 'Medium', value: 250 },
+    { name: 'Fast', value: 100 },
+    { name: 'Very Fast', value: 50 },
+    { name: 'i am speed', value: 10 },
+  ];
+  public selectedAnimationSpeed = this.animationSpeeds[2]; // Default to Medium
+  cleanCanvas() {
+    //suprime everything :/
+    this.context!.clearRect(
+      0,
+      0,
+      this.canvas.nativeElement.width,
+      this.canvas.nativeElement.height
+    );
+    //also resets the board
+    this.createGrid(true);
+  }
 
   @ViewChild('gameBoard', { static: false, read: ElementRef })
   private canvas: ElementRef<HTMLCanvasElement> = {} as ElementRef;
@@ -38,6 +52,7 @@ cleanCanvas() {
     { name: 'Petit', width: 200, height: 200 },
     { name: 'Moyen', width: 400, height: 400 },
     { name: 'Grand', width: 1000, height: 600 },
+    { name: 'Terrestrial', width: 1200, height: 800 },
   ];
   public selectedSize = this.boardSizes[1]; // Taille moyenne par défaut
   public isRunning = false;
@@ -60,26 +75,52 @@ cleanCanvas() {
   }
 
   // Crée une nouvelle grille
-  public createGrid(): void {
+  public createGrid(isEmpty: boolean = false): void {
     const numOfRows = this.selectedSize.height / RESOLUTION;
     const numOfColumns = this.selectedSize.width / RESOLUTION;
-    this.gameBoard = this.setupGrid(numOfRows, numOfColumns);
+    this.gameBoard = this.setupGrid(numOfRows, numOfColumns, isEmpty);
     this.render(this.gameBoard);
     this.updateLivingCells();
   }
 
   // Configure la grille initiale
-  private setupGrid(numOfRows: number, numOfColumns: number): BitArray[] {
-    const binaryRandom = () => (Math.random() > 0.5 ? 1 : 0);
-    return new Array(numOfRows)
-      .fill(0)
-      .map(() => new Array(numOfColumns).fill(0).map(binaryRandom));
+  private setupGrid(
+    numOfRows: number,
+    numOfColumns: number,
+    isEmpty: boolean = false
+  ): BitArray[] {
+    if (isEmpty) {
+      return new Array(numOfRows)
+        .fill(0)
+        .map(() => new Array(numOfColumns).fill(0));
+    } else {
+      const binaryRandom = () => (Math.random() > 0.5 ? 1 : 0);
+      return new Array(numOfRows)
+        .fill(0)
+        .map(() => new Array(numOfColumns).fill(0).map(binaryRandom));
+    }
   }
 
   // Dessine la grille sur le canvas
   private render(gameBoard: BitArray[]): void {
     const ctx = this.context;
     if (!ctx) return;
+
+    // Draw grid lines
+    ctx.strokeStyle = 'gray';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= gameBoard.length; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, i * RESOLUTION);
+      ctx.lineTo(gameBoard[0].length * RESOLUTION, i * RESOLUTION);
+      ctx.stroke();
+    }
+    for (let j = 0; j <= gameBoard[0].length; j++) {
+      ctx.beginPath();
+      ctx.moveTo(j * RESOLUTION, 0);
+      ctx.lineTo(j * RESOLUTION, gameBoard.length * RESOLUTION);
+      ctx.stroke();
+    }
 
     gameBoard.forEach((row, rowIndex) => {
       row.forEach((cell, colIndex) => {
@@ -91,6 +132,7 @@ cleanCanvas() {
           RESOLUTION
         );
         ctx.fillStyle = cell ? 'black' : 'white';
+
         ctx.fill();
       });
     });
@@ -103,7 +145,9 @@ cleanCanvas() {
     this.generation++;
     this.updateLivingCells();
     if (this.isRunning) {
-      this.animationId = requestAnimationFrame(() => this.animate());
+      setTimeout(() => {
+        this.animationId = requestAnimationFrame(() => this.animate());
+      }, this.selectedAnimationSpeed.value);
     }
   }
 
@@ -274,5 +318,15 @@ cleanCanvas() {
     if (B !== undefined && B === 1) aliveNeighbors++;
     if (BR !== undefined && BR === 1) aliveNeighbors++;
     return aliveNeighbors;
+  }
+
+  // Comment: Method to advance to the next generation
+  public nextGeneration(): void {
+    if (!this.isRunning) {
+      this.gameBoard = this.createNextGen(this.gameBoard);
+      this.render(this.gameBoard);
+      this.generation++;
+      this.updateLivingCells();
+    }
   }
 }
